@@ -1,3 +1,26 @@
+# Vagrant
+.vagrant
+*.retry
+
+# Vim
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+*~
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+.venv/
+
+# MacOS artifacts
+.DS_Store
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
