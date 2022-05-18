@@ -1,4 +1,4 @@
-module milenage
+module github.com/magma/milenage
 
 go 1.18
 

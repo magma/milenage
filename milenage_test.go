@@ -11,15 +11,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package milenage_test
+package milenage
 
 import (
 	"encoding/hex"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"milenage"
 )
 
 func TestGenerateEutranVector(t *testing.T) {
@@ -30,7 +28,7 @@ func TestGenerateEutranVector(t *testing.T) {
 	amf := []byte("\x80\x00")
 	plmn := []byte("\x02\xf8\x59")
 
-	milenage, err := milenage.NewMockCipher(amf, rand)
+	milenage, err := NewMockCipher(amf, rand)
 	assert.NoError(t, err)
 
 	eutran, err := milenage.GenerateEutranVector(key, opc, sqn, plmn)
@@ -48,7 +46,7 @@ func TestGenerateSIPAuthVector(t *testing.T) {
 	opc := []byte("\x8e'\xb6\xaf\x0ei.u\x0f2fz;\x14`]")
 	amf := []byte("\x80\x00")
 
-	milenage, err := milenage.NewMockCipher(amf, rand)
+	milenage, err := NewMockCipher(amf, rand)
 	assert.NoError(t, err)
 
 	vector, err := milenage.GenerateSIPAuthVector(key, opc, sqn)
@@ -68,7 +66,7 @@ func TestGenerateSIPAuthVectorWithRand(t *testing.T) {
 	opc := []byte("\x8e'\xb6\xaf\x0ei.u\x0f2fz;\x14`]")
 	amf := []byte("\x80\x00")
 
-	milenage, err := milenage.NewCipher(amf)
+	milenage, err := NewCipher(amf)
 	assert.NoError(t, err)
 
 	vector, err := milenage.GenerateSIPAuthVectorWithRand(rand, key, opc, sqn)
@@ -83,7 +81,7 @@ func TestGenerateSIPAuthVectorWithRand(t *testing.T) {
 
 func TestGenerateEutranVectorError(t *testing.T) {
 	amf := []byte("\x80\x00")
-	milenage, err := milenage.NewCipher(amf)
+	milenage, err := NewCipher(amf)
 	assert.NoError(t, err)
 
 	eutran, err := milenage.GenerateEutranVector(nil, nil, 0, nil)
@@ -92,92 +90,92 @@ func TestGenerateEutranVectorError(t *testing.T) {
 }
 
 func TestValidateGenerateEutranVectorInputs(t *testing.T) {
-	err := milenage.ValidateGenerateEutranVectorInputs(nil, nil, 0, nil)
+	err := ValidateGenerateEutranVectorInputs(nil, nil, 0, nil)
 	assert.Error(t, err)
 
-	var key = make([]byte, milenage.ExpectedKeyBytes)
-	var opc = make([]byte, milenage.ExpectedOpcBytes)
-	var plmn = make([]byte, milenage.ExpectedPlmnBytes)
-	err = milenage.ValidateGenerateEutranVectorInputs(key, opc, 0, plmn)
+	var key = make([]byte, ExpectedKeyBytes)
+	var opc = make([]byte, ExpectedOpcBytes)
+	var plmn = make([]byte, ExpectedPlmnBytes)
+	err = ValidateGenerateEutranVectorInputs(key, opc, 0, plmn)
 	assert.NoError(t, err)
 
-	var badKey = make([]byte, milenage.ExpectedKeyBytes*2)
-	err = milenage.ValidateGenerateEutranVectorInputs(badKey, opc, 0, plmn)
+	var badKey = make([]byte, ExpectedKeyBytes*2)
+	err = ValidateGenerateEutranVectorInputs(badKey, opc, 0, plmn)
 	assert.Error(t, err)
 
-	var badOpc = make([]byte, milenage.ExpectedOpcBytes/2)
-	err = milenage.ValidateGenerateEutranVectorInputs(key, badOpc, 0, plmn)
+	var badOpc = make([]byte, ExpectedOpcBytes/2)
+	err = ValidateGenerateEutranVectorInputs(key, badOpc, 0, plmn)
 	assert.Error(t, err)
 
-	var badPlmn = make([]byte, milenage.ExpectedPlmnBytes+1)
-	err = milenage.ValidateGenerateEutranVectorInputs(key, opc, 0, badPlmn)
+	var badPlmn = make([]byte, ExpectedPlmnBytes+1)
+	err = ValidateGenerateEutranVectorInputs(key, opc, 0, badPlmn)
 	assert.Error(t, err)
 
-	err = milenage.ValidateGenerateEutranVectorInputs(key, opc, milenage.MaxSqn+1, plmn)
+	err = ValidateGenerateEutranVectorInputs(key, opc, MaxSqn+1, plmn)
 	assert.Error(t, err)
 }
 
 func TestValidateGenerateSIPAuthVectorInputs(t *testing.T) {
-	err := milenage.ValidateGenerateSIPAuthVectorInputs(nil, nil, 0)
+	err := ValidateGenerateSIPAuthVectorInputs(nil, nil, 0)
 	assert.Error(t, err)
 
-	var key = make([]byte, milenage.ExpectedKeyBytes)
-	var opc = make([]byte, milenage.ExpectedOpcBytes)
-	err = milenage.ValidateGenerateSIPAuthVectorInputs(key, opc, 0)
+	var key = make([]byte, ExpectedKeyBytes)
+	var opc = make([]byte, ExpectedOpcBytes)
+	err = ValidateGenerateSIPAuthVectorInputs(key, opc, 0)
 	assert.NoError(t, err)
 
-	var badKey = make([]byte, milenage.ExpectedKeyBytes*2)
-	err = milenage.ValidateGenerateSIPAuthVectorInputs(badKey, opc, 0)
+	var badKey = make([]byte, ExpectedKeyBytes*2)
+	err = ValidateGenerateSIPAuthVectorInputs(badKey, opc, 0)
 	assert.EqualError(t, err, "incorrect key size. Expected 16 bytes, but got 32 bytes")
 
-	var badOpc = make([]byte, milenage.ExpectedOpcBytes/2)
-	err = milenage.ValidateGenerateSIPAuthVectorInputs(key, badOpc, 0)
+	var badOpc = make([]byte, ExpectedOpcBytes/2)
+	err = ValidateGenerateSIPAuthVectorInputs(key, badOpc, 0)
 	assert.EqualError(t, err, "incorrect opc size. Expected 16 bytes, but got 8 bytes")
 
-	err = milenage.ValidateGenerateSIPAuthVectorInputs(key, opc, milenage.MaxSqn+1)
+	err = ValidateGenerateSIPAuthVectorInputs(key, opc, MaxSqn+1)
 	assert.EqualError(t, err, "sequence number too large, expected a number which can fit in 48 bits. Got: 281474976710656")
 }
 
 func TestValidateGenerateSIPAuthVectorWithRandInputs(t *testing.T) {
-	err := milenage.ValidateGenerateSIPAuthVectorWithRandInputs(nil, nil, nil, 0)
+	err := ValidateGenerateSIPAuthVectorWithRandInputs(nil, nil, nil, 0)
 	assert.Error(t, err)
 
-	var rand = make([]byte, milenage.RandChallengeBytes)
-	var key = make([]byte, milenage.ExpectedKeyBytes)
-	var opc = make([]byte, milenage.ExpectedOpcBytes)
-	err = milenage.ValidateGenerateSIPAuthVectorWithRandInputs(rand, key, opc, 0)
+	var rand = make([]byte, RandChallengeBytes)
+	var key = make([]byte, ExpectedKeyBytes)
+	var opc = make([]byte, ExpectedOpcBytes)
+	err = ValidateGenerateSIPAuthVectorWithRandInputs(rand, key, opc, 0)
 	assert.NoError(t, err)
 
-	var badRand = make([]byte, milenage.RandChallengeBytes*2)
-	err = milenage.ValidateGenerateSIPAuthVectorWithRandInputs(badRand, key, opc, 0)
+	var badRand = make([]byte, RandChallengeBytes*2)
+	err = ValidateGenerateSIPAuthVectorWithRandInputs(badRand, key, opc, 0)
 	assert.EqualError(t, err, "incorrect rand size. Expected 16 bytes, but got 32 bytes")
 
-	var badKey = make([]byte, milenage.ExpectedKeyBytes*2)
-	err = milenage.ValidateGenerateSIPAuthVectorWithRandInputs(rand, badKey, opc, 0)
+	var badKey = make([]byte, ExpectedKeyBytes*2)
+	err = ValidateGenerateSIPAuthVectorWithRandInputs(rand, badKey, opc, 0)
 	assert.EqualError(t, err, "incorrect key size. Expected 16 bytes, but got 32 bytes")
 
-	var badOpc = make([]byte, milenage.ExpectedOpcBytes/2)
-	err = milenage.ValidateGenerateSIPAuthVectorWithRandInputs(rand, key, badOpc, 0)
+	var badOpc = make([]byte, ExpectedOpcBytes/2)
+	err = ValidateGenerateSIPAuthVectorWithRandInputs(rand, key, badOpc, 0)
 	assert.EqualError(t, err, "incorrect opc size. Expected 16 bytes, but got 8 bytes")
 
-	err = milenage.ValidateGenerateSIPAuthVectorWithRandInputs(rand, key, opc, milenage.MaxSqn+1)
+	err = ValidateGenerateSIPAuthVectorWithRandInputs(rand, key, opc, MaxSqn+1)
 	assert.EqualError(t, err, "sequence number too large, expected a number which can fit in 48 bits. Got: 281474976710656")
 }
 
 func TestNewMilenageError(t *testing.T) {
 	amf := []byte("\x80")
-	_, err := milenage.NewCipher(amf)
+	_, err := NewCipher(amf)
 	assert.Error(t, err)
 
 	amf = []byte("\x80\x80\x80")
-	_, err = milenage.NewCipher(amf)
+	_, err = NewCipher(amf)
 	assert.Error(t, err)
 
-	_, err = milenage.NewCipher(nil)
+	_, err = NewCipher(nil)
 	assert.Error(t, err)
 
 	amf = []byte("\x80\x80")
-	_, err = milenage.NewCipher(amf)
+	_, err = NewCipher(amf)
 	assert.NoError(t, err)
 }
 
@@ -191,7 +189,7 @@ func TestF1_Set1(t *testing.T) {
 	amf := []byte("\xb9\xb9")
 	opc := []byte("\xcdc\xcbq\x95J\x9fNH\xa5\x99N7\xa0+\xaf")
 
-	macA, macS, err := milenage.F1(key, sqn, rand, opc, amf)
+	macA, macS, err := F1(key, sqn, rand, opc, amf)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("\x4a\x9f\xfa\xc3\x54\xdf\xaf\xb3"), macA)
 	assert.Equal(t, []byte("\x01\xcf\xaf\x9e\xc4\xe8\x71\xe9"), macS)
@@ -214,7 +212,7 @@ func TestF1_Set2(t *testing.T) {
 	expectedMacS, err := hex.DecodeString("a8c016e51ef4a343")
 	assert.NoError(t, err)
 
-	macA, macS, err := milenage.F1(key, sqn, rand, opc, amf)
+	macA, macS, err := F1(key, sqn, rand, opc, amf)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedMacA, macA)
 	assert.Equal(t, expectedMacS, macS)
@@ -237,7 +235,7 @@ func TestF1_Set3(t *testing.T) {
 	expectedMacS, err := hex.DecodeString("95814ba2b3044324")
 	assert.NoError(t, err)
 
-	macA, macS, err := milenage.F1(key, sqn, rand, opc, amf)
+	macA, macS, err := F1(key, sqn, rand, opc, amf)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedMacA, macA)
 	assert.Equal(t, expectedMacS, macS)
@@ -260,7 +258,7 @@ func TestF1_Set4(t *testing.T) {
 	expectedMacS, err := hex.DecodeString("ac2cc74a96871837")
 	assert.NoError(t, err)
 
-	macA, macS, err := milenage.F1(key, sqn, rand, opc, amf)
+	macA, macS, err := F1(key, sqn, rand, opc, amf)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedMacA, macA)
 	assert.Equal(t, expectedMacS, macS)
@@ -283,7 +281,7 @@ func TestF1_Set5(t *testing.T) {
 	expectedMacS, err := hex.DecodeString("9e85790336bb3fa2")
 	assert.NoError(t, err)
 
-	macA, macS, err := milenage.F1(key, sqn, rand, opc, amf)
+	macA, macS, err := F1(key, sqn, rand, opc, amf)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedMacA, macA)
 	assert.Equal(t, expectedMacS, macS)
@@ -306,7 +304,7 @@ func TestF1_Set6(t *testing.T) {
 	expectedMacS, err := hex.DecodeString("80246b8d0186bcf1")
 	assert.NoError(t, err)
 
-	macA, macS, err := milenage.F1(key, sqn, rand, opc, amf)
+	macA, macS, err := F1(key, sqn, rand, opc, amf)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedMacA, macA)
 	assert.Equal(t, expectedMacS, macS)
@@ -318,7 +316,7 @@ func TestF2F5_Set1(t *testing.T) {
 	key := []byte("\x46\x5b\x5c\xe8\xb1\x99\xb4\x9f\xaa\x5f\x0a\x2e\xe2\x38\xa6\xbc")
 	opc := []byte("\xcdc\xcbq\x95J\x9fNH\xa5\x99N7\xa0+\xaf")
 
-	xres, ak, err := milenage.F2F5(key, rand, opc)
+	xres, ak, err := F2F5(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("\xa5\x42\x11\xd5\xe3\xba\x50\xbf"), xres)
 	assert.Equal(t, []byte("\xaa\x68\x9c\x64\x83\x70"), ak)
@@ -337,7 +335,7 @@ func TestF2F5_Set2(t *testing.T) {
 	expectedAk, err := hex.DecodeString("c47783995f72")
 	assert.NoError(t, err)
 
-	xres, ak, err := milenage.F2F5(key, rand, opc)
+	xres, ak, err := F2F5(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedXres, xres)
 	assert.Equal(t, expectedAk, ak)
@@ -356,7 +354,7 @@ func TestF2F5_Set3(t *testing.T) {
 	expectedAk, err := hex.DecodeString("33484dc2136b")
 	assert.NoError(t, err)
 
-	xres, ak, err := milenage.F2F5(key, rand, opc)
+	xres, ak, err := F2F5(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedXres, xres)
 	assert.Equal(t, expectedAk, ak)
@@ -375,7 +373,7 @@ func TestF2F5_Set4(t *testing.T) {
 	expectedAk, err := hex.DecodeString("f0b9c08ad02e")
 	assert.NoError(t, err)
 
-	xres, ak, err := milenage.F2F5(key, rand, opc)
+	xres, ak, err := F2F5(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedXres, xres)
 	assert.Equal(t, expectedAk, ak)
@@ -394,7 +392,7 @@ func TestF2F5_Set5(t *testing.T) {
 	expectedAk, err := hex.DecodeString("31e11a609118")
 	assert.NoError(t, err)
 
-	xres, ak, err := milenage.F2F5(key, rand, opc)
+	xres, ak, err := F2F5(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedXres, xres)
 	assert.Equal(t, expectedAk, ak)
@@ -413,7 +411,7 @@ func TestF2F5_Set6(t *testing.T) {
 	expectedAk, err := hex.DecodeString("45b0f69ab06c")
 	assert.NoError(t, err)
 
-	xres, ak, err := milenage.F2F5(key, rand, opc)
+	xres, ak, err := F2F5(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedXres, xres)
 	assert.Equal(t, expectedAk, ak)
@@ -425,7 +423,7 @@ func TestF3_Set1(t *testing.T) {
 	key := []byte("\x46\x5b\x5c\xe8\xb1\x99\xb4\x9f\xaa\x5f\x0a\x2e\xe2\x38\xa6\xbc")
 	opc := []byte("\xcdc\xcbq\x95J\x9fNH\xa5\x99N7\xa0+\xaf")
 
-	ck, err := milenage.F3(key, rand, opc)
+	ck, err := F3(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("\xb4\x0b\xa9\xa3\xc5\x8b\x2a\x05\xbb\xf0\xd9\x87\xb2\x1b\xf8\xcb"), ck)
 }
@@ -441,7 +439,7 @@ func TestF3_Set2(t *testing.T) {
 	expectedCk, err := hex.DecodeString("58c433ff7a7082acd424220f2b67c556")
 	assert.NoError(t, err)
 
-	ck, err := milenage.F3(key, rand, opc)
+	ck, err := F3(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedCk, ck)
 }
@@ -457,7 +455,7 @@ func TestF3_Set3(t *testing.T) {
 	expectedCk, err := hex.DecodeString("5dbdbb2954e8f3cde665b046179a5098")
 	assert.NoError(t, err)
 
-	ck, err := milenage.F3(key, rand, opc)
+	ck, err := F3(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedCk, ck)
 }
@@ -473,7 +471,7 @@ func TestF3_Set4(t *testing.T) {
 	expectedCk, err := hex.DecodeString("e203edb3971574f5a94b0d61b816345d")
 	assert.NoError(t, err)
 
-	ck, err := milenage.F3(key, rand, opc)
+	ck, err := F3(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedCk, ck)
 }
@@ -489,7 +487,7 @@ func TestF3_Set5(t *testing.T) {
 	expectedCk, err := hex.DecodeString("7657766b373d1c2138f307e3de9242f9")
 	assert.NoError(t, err)
 
-	ck, err := milenage.F3(key, rand, opc)
+	ck, err := F3(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedCk, ck)
 }
@@ -505,7 +503,7 @@ func TestF3_Set6(t *testing.T) {
 	expectedCk, err := hex.DecodeString("3f8c7587fe8e4b233af676aede30ba3b")
 	assert.NoError(t, err)
 
-	ck, err := milenage.F3(key, rand, opc)
+	ck, err := F3(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedCk, ck)
 }
@@ -516,7 +514,7 @@ func TestF4_Set1(t *testing.T) {
 	key := []byte("\x46\x5b\x5c\xe8\xb1\x99\xb4\x9f\xaa\x5f\x0a\x2e\xe2\x38\xa6\xbc")
 	opc := []byte("\xcdc\xcbq\x95J\x9fNH\xa5\x99N7\xa0+\xaf")
 
-	ik, err := milenage.F4(key, rand, opc)
+	ik, err := F4(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("\xf7\x69\xbc\xd7\x51\x04\x46\x04\x12\x76\x72\x71\x1c\x6d\x34\x41"), ik)
 }
@@ -532,7 +530,7 @@ func TestF4_Set2(t *testing.T) {
 	expectedIk, err := hex.DecodeString("21a8c1f929702adb3e738488b9f5c5da")
 	assert.NoError(t, err)
 
-	ik, err := milenage.F4(key, rand, opc)
+	ik, err := F4(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedIk, ik)
 }
@@ -548,7 +546,7 @@ func TestF4_Set3(t *testing.T) {
 	expectedIk, err := hex.DecodeString("59a92d3b476a0443487055cf88b2307b")
 	assert.NoError(t, err)
 
-	ik, err := milenage.F4(key, rand, opc)
+	ik, err := F4(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedIk, ik)
 }
@@ -564,7 +562,7 @@ func TestF4_Set4(t *testing.T) {
 	expectedIk, err := hex.DecodeString("0c4524adeac041c4dd830d20854fc46b")
 	assert.NoError(t, err)
 
-	ik, err := milenage.F4(key, rand, opc)
+	ik, err := F4(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedIk, ik)
 }
@@ -580,7 +578,7 @@ func TestF4_Set5(t *testing.T) {
 	expectedIk, err := hex.DecodeString("1c42e960d89b8fa99f2744e0708ccb53")
 	assert.NoError(t, err)
 
-	ik, err := milenage.F4(key, rand, opc)
+	ik, err := F4(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedIk, ik)
 }
@@ -596,7 +594,7 @@ func TestF4_Set6(t *testing.T) {
 	expectedIk, err := hex.DecodeString("a7466cc1e6b2a1337d49d3b66e95d7b4")
 	assert.NoError(t, err)
 
-	ik, err := milenage.F4(key, rand, opc)
+	ik, err := F4(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedIk, ik)
 }
@@ -607,7 +605,7 @@ func TestF5Star_Set1(t *testing.T) {
 	key := []byte("\x46\x5b\x5c\xe8\xb1\x99\xb4\x9f\xaa\x5f\x0a\x2e\xe2\x38\xa6\xbc")
 	opc := []byte("\xcdc\xcbq\x95J\x9fNH\xa5\x99N7\xa0+\xaf")
 
-	ak, err := milenage.F5Star(key, rand, opc)
+	ak, err := F5Star(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("\x45\x1e\x8b\xec\xa4\x3b"), ak)
 }
@@ -623,7 +621,7 @@ func TestF5Star_Set2(t *testing.T) {
 	expectedAk, err := hex.DecodeString("30f1197061c1")
 	assert.NoError(t, err)
 
-	ak, err := milenage.F5Star(key, rand, opc)
+	ak, err := F5Star(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedAk, ak)
 }
@@ -639,7 +637,7 @@ func TestF5Star_Set3(t *testing.T) {
 	expectedAk, err := hex.DecodeString("deacdd848cc6")
 	assert.NoError(t, err)
 
-	ak, err := milenage.F5Star(key, rand, opc)
+	ak, err := F5Star(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedAk, ak)
 }
@@ -655,7 +653,7 @@ func TestF5Star_Set4(t *testing.T) {
 	expectedAk, err := hex.DecodeString("6085a86c6f63")
 	assert.NoError(t, err)
 
-	ak, err := milenage.F5Star(key, rand, opc)
+	ak, err := F5Star(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedAk, ak)
 }
@@ -671,7 +669,7 @@ func TestF5Star_Set5(t *testing.T) {
 	expectedAk, err := hex.DecodeString("fe2555e54aa9")
 	assert.NoError(t, err)
 
-	ak, err := milenage.F5Star(key, rand, opc)
+	ak, err := F5Star(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedAk, ak)
 }
@@ -687,7 +685,7 @@ func TestF5Star_Set6(t *testing.T) {
 	expectedAk, err := hex.DecodeString("1f53cd2b1113")
 	assert.NoError(t, err)
 
-	ak, err := milenage.F5Star(key, rand, opc)
+	ak, err := F5Star(key, rand, opc)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedAk, ak)
 }
@@ -697,7 +695,7 @@ func TestGenerateAutn(t *testing.T) {
 	ak := []byte("\x00\x00\x01\x01\xcc\x0c")
 	macA := []byte("\x34\xdd\x01\x00\xde\x12\x76\x40")
 	amf := []byte("\xab\xcd")
-	autn := milenage.GenerateAutn(sqn, ak, macA, amf)
+	autn := GenerateAutn(sqn, ak, macA, amf)
 	assert.Equal(t, []byte("\x00\x01\x00\x01\x66\x06\xab\xcd\x34\xdd\x01\x00\xde\x12\x76\x40"), autn)
 }
 
@@ -708,7 +706,7 @@ func TestGenerateKasme(t *testing.T) {
 	ak := []byte("\x00\x00\x01\x01\xcc\x0c")
 	plmn := []byte("\x02\xf8\x59")
 
-	kasme, err := milenage.GenerateKasme(ck, ik, plmn, sqn, ak)
+	kasme, err := GenerateKasme(ck, ik, plmn, sqn, ak)
 	assert.NoError(t, err)
 	assert.Equal(t,
 		[]byte{0xd0, 0x87, 0x64, 0xb4, 0xfd, 0x45, 0xfa, 0x3b, 0x6, 0x59, 0x79,
@@ -720,24 +718,24 @@ func TestGenerateOpc(t *testing.T) {
 	key := []byte("\x46\x5b\x5c\xe8\xb1\x99\xb4\x9f\xaa\x5f\x0a\x2e\xe2\x38\xa6\xbc")
 	op := []byte("\xcd\xc2\x02\xd5\x12> \xf6+mgj\xc7,\xb3\x18")
 
-	opc, err := milenage.GenerateOpc(key, op)
+	opc, err := GenerateOpc(key, op)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("\xcdc\xcbq\x95J\x9fNH\xa5\x99N7\xa0+\xaf"), opc[:])
 }
 
 func TestGenerateOpc_InvalidInput(t *testing.T) {
-	var key = make([]byte, milenage.ExpectedKeyBytes)
-	var op = make([]byte, milenage.ExpectedOpBytes)
-	var invalidKey = make([]byte, milenage.ExpectedKeyBytes-1)
-	var invalidOp = make([]byte, milenage.ExpectedOpBytes+1)
+	var key = make([]byte, ExpectedKeyBytes)
+	var op = make([]byte, ExpectedOpBytes)
+	var invalidKey = make([]byte, ExpectedKeyBytes-1)
+	var invalidOp = make([]byte, ExpectedOpBytes+1)
 
-	_, err := milenage.GenerateOpc(key, op)
+	_, err := GenerateOpc(key, op)
 	assert.NoError(t, err)
 
-	_, err = milenage.GenerateOpc(invalidKey, op)
+	_, err = GenerateOpc(invalidKey, op)
 	assert.EqualError(t, err, "incorrect key size. Expected 16 bytes, but got 15 bytes")
 
-	_, err = milenage.GenerateOpc(key, invalidOp)
+	_, err = GenerateOpc(key, invalidOp)
 	assert.EqualError(t, err, "incorrect op size. Expected 16 bytes, but got 17 bytes")
 }
 
@@ -748,7 +746,7 @@ func TestGenerateResync(t *testing.T) {
 	amf := []byte{0, 0}
 	auts := []byte{236, 25, 14, 177, 16, 88, 219, 95, 99, 96, 89, 31, 52, 234}
 
-	milenage, err := milenage.NewCipher(amf)
+	milenage, err := NewCipher(amf)
 	assert.NoError(t, err)
 
 	sqn, macS, err := milenage.GenerateResync(auts, key, opc, rand)
@@ -758,18 +756,18 @@ func TestGenerateResync(t *testing.T) {
 }
 
 func TestGenerateResync_InvalidInput(t *testing.T) {
-	rand := make([]byte, milenage.RandChallengeBytes)
-	key := make([]byte, milenage.ExpectedKeyBytes)
-	opc := make([]byte, milenage.ExpectedOpcBytes)
-	auts := make([]byte, milenage.ExpectedAutsBytes)
-	amf := make([]byte, milenage.ExpectedAmfBytes)
+	rand := make([]byte, RandChallengeBytes)
+	key := make([]byte, ExpectedKeyBytes)
+	opc := make([]byte, ExpectedOpcBytes)
+	auts := make([]byte, ExpectedAutsBytes)
+	amf := make([]byte, ExpectedAmfBytes)
 
-	invalidRand := make([]byte, milenage.RandChallengeBytes+1)
-	invalidKey := make([]byte, milenage.ExpectedKeyBytes-1)
-	invalidOpc := make([]byte, milenage.ExpectedOpcBytes*2)
-	invalidAuts := make([]byte, milenage.ExpectedAutsBytes/2)
+	invalidRand := make([]byte, RandChallengeBytes+1)
+	invalidKey := make([]byte, ExpectedKeyBytes-1)
+	invalidOpc := make([]byte, ExpectedOpcBytes*2)
+	invalidAuts := make([]byte, ExpectedAutsBytes/2)
 
-	milenage, err := milenage.NewCipher(amf)
+	milenage, err := NewCipher(amf)
 	assert.NoError(t, err)
 
 	_, _, err = milenage.GenerateResync(auts, key, opc, rand)
@@ -789,29 +787,29 @@ func TestGenerateResync_InvalidInput(t *testing.T) {
 }
 
 func TestValidateGenerateResyncInputs(t *testing.T) {
-	rand := make([]byte, milenage.RandChallengeBytes)
-	key := make([]byte, milenage.ExpectedKeyBytes)
-	opc := make([]byte, milenage.ExpectedOpcBytes)
-	auts := make([]byte, milenage.ExpectedAutsBytes)
+	rand := make([]byte, RandChallengeBytes)
+	key := make([]byte, ExpectedKeyBytes)
+	opc := make([]byte, ExpectedOpcBytes)
+	auts := make([]byte, ExpectedAutsBytes)
 
-	invalidRand := make([]byte, milenage.RandChallengeBytes+1)
-	invalidKey := make([]byte, milenage.ExpectedKeyBytes-1)
-	invalidOpc := make([]byte, milenage.ExpectedOpcBytes*2)
-	invalidAuts := make([]byte, milenage.ExpectedAutsBytes/2)
+	invalidRand := make([]byte, RandChallengeBytes+1)
+	invalidKey := make([]byte, ExpectedKeyBytes-1)
+	invalidOpc := make([]byte, ExpectedOpcBytes*2)
+	invalidAuts := make([]byte, ExpectedAutsBytes/2)
 
-	err := milenage.ValidateGenerateResyncInputs(auts, key, opc, rand)
+	err := ValidateGenerateResyncInputs(auts, key, opc, rand)
 	assert.NoError(t, err)
 
-	err = milenage.ValidateGenerateResyncInputs(auts, key, opc, invalidRand)
+	err = ValidateGenerateResyncInputs(auts, key, opc, invalidRand)
 	assert.EqualError(t, err, "incorrect rand size. Expected 16 bytes, but got 17 bytes")
 
-	err = milenage.ValidateGenerateResyncInputs(auts, invalidKey, opc, rand)
+	err = ValidateGenerateResyncInputs(auts, invalidKey, opc, rand)
 	assert.EqualError(t, err, "incorrect key size. Expected 16 bytes, but got 15 bytes")
 
-	err = milenage.ValidateGenerateResyncInputs(auts, key, invalidOpc, rand)
+	err = ValidateGenerateResyncInputs(auts, key, invalidOpc, rand)
 	assert.EqualError(t, err, "incorrect opc size. Expected 16 bytes, but got 32 bytes")
 
-	err = milenage.ValidateGenerateResyncInputs(invalidAuts, key, opc, rand)
+	err = ValidateGenerateResyncInputs(invalidAuts, key, opc, rand)
 	assert.EqualError(t, err, "incorrect auts size. Expected 14 bytes, but got 7 bytes")
 }
 
@@ -823,22 +821,10 @@ func TestXor(t *testing.T) {
 
 func TestRotate(t *testing.T) {
 	arr := []byte("\x00\x01\x02\x03")
-	assert.Equal(t, arr, milenage.Rotate(arr, 0))
-	assert.Equal(t, []byte("\x01\x02\x03\x00"), milenage.Rotate(arr, 1))
-	assert.Equal(t, []byte("\x02\x03\x00\x01"), milenage.Rotate(arr, 2))
-	assert.Equal(t, []byte("\x03\x00\x01\x02"), milenage.Rotate(arr, 3))
-	assert.Equal(t, arr, milenage.Rotate(arr, 4))
-	assert.Equal(t, []byte("\x01\x02\x03\x00"), milenage.Rotate(arr, 5))
-}
-
-func xor(a, b []byte) []byte {
-	n, nb := len(a), len(b)
-	if nb < n {
-		n = nb
-	}
-	dst := make([]byte, n)
-	for i := 0; i < n; i++ {
-		dst[i] = a[i] ^ b[i]
-	}
-	return dst
+	assert.Equal(t, arr, Rotate(arr, 0))
+	assert.Equal(t, []byte("\x01\x02\x03\x00"), Rotate(arr, 1))
+	assert.Equal(t, []byte("\x02\x03\x00\x01"), Rotate(arr, 2))
+	assert.Equal(t, []byte("\x03\x00\x01\x02"), Rotate(arr, 3))
+	assert.Equal(t, arr, Rotate(arr, 4))
+	assert.Equal(t, []byte("\x01\x02\x03\x00"), Rotate(arr, 5))
 }
